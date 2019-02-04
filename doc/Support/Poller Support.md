@@ -1,4 +1,5 @@
 source: Support/Poller Support.md
+path: blob/master/doc/
 ### poller.php
 
 This document will explain how to use poller.php to debug issues or manually running to process data.
@@ -45,7 +46,7 @@ If you need to debug the output of poller-wrapper.py then you can add `-d` to th
 #### Poller config
 
 These are the default poller config items. You can globally disable a module by setting it to 0. If you just want to
-disable it for one device then you can do this within the WebUI -> Settings -> Modules.
+disable it for one device then you can do this within the WebUI Device -> Edit -> Modules.
 
 ```php
 $config['poller_modules']['unix-agent']                  = false;
@@ -60,6 +61,7 @@ $config['poller_modules']['hr-mib']                      = true;
 $config['poller_modules']['ucd-mib']                     = true;
 $config['poller_modules']['ipSystemStats']               = true;
 $config['poller_modules']['ports']                       = true;
+$config['poller_modules']['nac']                         = false;
 $config['poller_modules']['bgp-peers']                   = true;
 $config['poller_modules']['junose-atm-vp']               = false;
 $config['poller_modules']['toner']                       = false;
@@ -133,6 +135,8 @@ $config['os']['linux']['poller_modules']['unix-agent'] = true;
 `ipSystemStats`: IP statistics for device.
 
 `ports`: This module will detect all ports on a device excluding ones configured to be ignored by config options.
+
+`nac`: Network Access Control (NAC) or 802.1X support.
 
 `bgp-peers`: BGP detection and support.
 

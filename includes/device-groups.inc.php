@@ -127,7 +127,12 @@ function GenGroupSQL($pattern, $search = '', $extra = 0)
                     list($tmp,$last) = explode('.', $glue);
                     $qry .= $glue.' = ';
                 } else {
-                    list($tmp,$new) = explode('.', $glue);
+                    $parts = explode('.', $glue);
+                    if (count($parts) == 3) {
+                        list($tmp, $new, $last) = $parts;
+                    } else {
+                        list($tmp,$new) = $parts;
+                    }
                     $qry .= $tmp.'.'.$last.' && '.$tmp.'.'.$new.' = ';
                     $last = $new;
                 }
@@ -312,7 +317,7 @@ function UpdateGroupsForDevice($device_id)
 
     // remove old groups
     if (!empty($removed_groups)) {
-        dbDelete('device_group_device', '`device_id`=? AND `device_group_id` IN (?)', array($device_id, array(implode(',', $removed_groups))));
+        dbDelete('device_group_device', '`device_id`=? AND `device_group_id` IN ' . dbGenPlaceholders(count($removed_groups)), array_merge([$device_id], $removed_groups));
     }
     d_echo("### End Device Groups ###\n");
 }
@@ -341,7 +346,7 @@ function UpdateDeviceGroup($group_id)
 
     // remove old devices
     if (!empty($removed_devices)) {
-        dbDelete('device_group_device', '`device_group_id`=? AND `device_id` IN (?)', array($group_id, array(implode(',', $removed_devices))));
+        dbDelete('device_group_device', '`device_group_id`=? AND `device_id` IN ' . dbGenPlaceholders(count($removed_devices)), array_merge([$group_id], $removed_devices));
     }
 }
 

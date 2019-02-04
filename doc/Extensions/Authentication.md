@@ -1,4 +1,5 @@
 source: Extensions/Authentication.md
+path: blob/master/doc/
 # Authentication modules
 
 LibreNMS supports multiple authentication modules along with [Two Factor Auth](http://docs.librenms.org/Extensions/Two-Factor-Auth/).
@@ -18,9 +19,11 @@ Here we will provide configuration details for these modules.
 
 - Single Sign-on: [sso](#single-sign-on)
 
+⚠️ **When enabling a new authentication module, the local users will no longer be available to log in.**
+
 ### Enable authentication module
 
-To enable a particular authentication module you need to set this up in config.php.
+To enable a particular authentication module you need to set this up in config.php. Please note that only ONE module can be enabled. LibreNMS doesn't support multiple authentication mechanism at the same time.
 
 ```php
 $config['auth_mechanism'] = "mysql";
@@ -158,6 +161,7 @@ $config['auth_ldap_group']  = 'cn=groupname,ou=groups,dc=example,dc=com'; // gen
 $config['auth_ldap_groupmemberattr'] = 'memberUid'; // attribute to use to see if a user is a member of a group
 $config['auth_ldap_uid_attribute'] = 'uidnumber';   // attribute for unique id
 $config['auth_ldap_debug'] = false;                 // enable for verbose debug messages
+$config['auth_ldap_userdn'] = true;                 // Uses a users full DN as the value of the member attribute in a group instead of member: username. (it’s member: uid=username,ou=groups,dc=domain,dc=com)
 ```
 
 ### LDAP bind user (optional)
@@ -273,7 +277,7 @@ $config['auth_ldap_cache_ttl'] = 300;
 
 ## View/embedded graphs without being logged into LibreNMS
 ```php
-$config['allow_unauth_graphs_cidr'] = array(127.0.0.1/32');
+$config['allow_unauth_graphs_cidr'] = array('127.0.0.1/32');
 $config['allow_unauth_graphs'] = true;
 ```
 

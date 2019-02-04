@@ -2,11 +2,17 @@
 
 namespace App\Providers;
 
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rule;
 use LibreNMS\Config;
 use LibreNMS\Exceptions\DatabaseConnectException;
+use LibreNMS\Util\IP;
+use LibreNMS\Util\Validate;
+use Request;
+use Validator;
 
 include_once __DIR__ . '/../../includes/dbFacile.php';
 
@@ -16,31 +22,18 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      *
      * @return void
-     * @throws DatabaseConnectException caught by App\Exceptions\Handler and displayed to the user
      */
     public function boot()
     {
-        // connect legacy db, only if configured
-        //FIXME this is for auth right now, remove later
-        $db_config = config('database.connections')[config('database.default')];
-        if (!empty($db_config['database'])) {
-            dbConnect(
-                $db_config['host'],
-                $db_config['username'],
-                $db_config['password'],
-                $db_config['database'],
-                $db_config['port'],
-                $db_config['unix_socket']
-            );
-        }
+        // Install legacy dbFacile fetch mode listener
+        \LibreNMS\DB\Eloquent::initLegacyListeners();
 
         // load config
         Config::load();
 
-        // direct log output to librenms.log
+        // replace early boot logging redirect log to config location, unless APP_LOG is set
         Log::getMonolog()->popHandler(); // remove existing errorlog logger
-        Log::useFiles(Config::get('log_file', base_path('logs/librenms.log')), 'error');
-
+        Log::useFiles(config('app.log') ?: Config::get('log_file', base_path('logs/librenms.log')), 'error');
 
         // Blade directives (Yucky because of < L5.5)
         Blade::directive('config', function ($key) {
@@ -59,6 +52,9 @@ class AppServiceProvider extends ServiceProvider
             return "<?php endif; ?>";
         });
 
+        $this->bootCustomValidators();
+        $this->configureMorphAliases();
+
         // Development service providers
         if ($this->app->environment() !== 'production') {
             if (class_exists(\Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class)) {
@@ -66,7 +62,10 @@ class AppServiceProvider extends ServiceProvider
             }
 
             if (config('app.debug') && class_exists(\Barryvdh\Debugbar\ServiceProvider::class)) {
-                $this->app->register(\Barryvdh\Debugbar\ServiceProvider::class);
+                // disable debugbar for api routes
+                if (!Request::is('api/*')) {
+                    $this->app->register(\Barryvdh\Debugbar\ServiceProvider::class);
+                }
             }
         }
     }
@@ -78,6 +77,48 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->registerGeocoder();
+    }
+
+    private function configureMorphAliases()
+    {
+        Relation::morphMap([
+            'interface' => \App\Models\Port::class,
+            'sensor' => \App\Models\Sensor::class,
+            'device' => \App\Models\Device::class,
+            'device_group' => \App\Models\DeviceGroup::class,
+        ]);
+    }
+
+    private function registerGeocoder()
+    {
+        $this->app->alias(\LibreNMS\Interfaces\Geocoder::class, 'geocoder');
+        $this->app->bind(\LibreNMS\Interfaces\Geocoder::class, function ($app) {
+            $engine = Config::get('geoloc.engine');
+
+            switch ($engine) {
+                case 'mapquest':
+                    Log::debug('MapQuest geocode engine');
+                    return $app->make(\App\ApiClients\MapquestApi::class);
+                case 'bing':
+                    Log::debug('Bing geocode engine');
+                    return $app->make(\App\ApiClients\BingApi::class);
+                case 'openstreetmap':
+                    Log::debug('OpenStreetMap geocode engine');
+                    return $app->make(\App\ApiClients\NominatimApi::class);
+                default:
+                case 'google':
+                    Log::debug('Google Maps geocode engine');
+                    return $app->make(\App\ApiClients\GoogleMapsApi::class);
+            }
+        });
+    }
+
+    private function bootCustomValidators()
+    {
+        Validator::extend('ip_or_hostname', function ($attribute, $value, $parameters, $validator) {
+            $ip = substr($value, 0, strpos($value, '/') ?: strlen($value)); // allow prefixes too
+            return IP::isValid($ip) || Validate::hostname($value);
+        }, __('The :attribute must a valid IP address/network or hostname.'));
     }
 }

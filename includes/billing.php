@@ -79,7 +79,7 @@ function getValue($host, $port, $id, $inout)
 
     $oid    = 'IF-MIB::ifHC'.$inout.'Octets.'.$id;
     $device = dbFetchRow("SELECT * from `devices` WHERE `hostname` = '".mres($host)."' LIMIT 1");
-    $value  = snmp_get($device, $oid, '-O qv');
+    $value  = snmp_get($device, $oid, '-Oqv');
 
     if (!is_numeric($value)) {
         $oid   = 'IF-MIB::if'.$inout.'Octets.'.$id;
@@ -159,18 +159,7 @@ function get95thout($bill_id, $datefrom, $dateto)
 
 function getRates($bill_id, $datefrom, $dateto)
 {
-    $data             = array();
-    $mq_text          = 'SELECT count(delta) FROM bill_data ';
-    $mq_text         .= " WHERE bill_id = '".mres($bill_id)."'";
-    $mq_text         .= " AND timestamp > '".mres($datefrom)."' AND timestamp <= '".mres($dateto)."'";
-    $measurements     = dbFetchCell($mq_sql);
-    $measurement_95th = (round(($measurements / 100 * 95)) - 1);
-
-    $q_95_sql  = "SELECT delta FROM bill_data  WHERE bill_id = '".mres($bill_id)."'";
-    $q_95_sql .= " AND timestamp > '".mres($datefrom)."' AND timestamp <= '".mres($dateto)."' ORDER BY delta ASC";
-
-    $a_95th = dbFetchColumn($q_95_sql);
-    $m_95th = $a_95th[$measurement_95th];
+    $data = [];
 
     $sum_data = getSum($bill_id, $datefrom, $dateto);
     $mtot     = $sum_data['total'];

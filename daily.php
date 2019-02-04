@@ -6,6 +6,8 @@
  * (c) 2013 LibreNMS Contributors
  */
 
+use App\Models\Device;
+use Illuminate\Database\Eloquent\Collection;
 use LibreNMS\Config;
 use LibreNMS\Exceptions\LockException;
 use LibreNMS\Util\MemcacheLock;
@@ -236,8 +238,8 @@ if ($options['f'] === 'purgeusers') {
             foreach (dbFetchRows("SELECT DISTINCT(`user`) FROM `authlog` WHERE `datetime` >= DATE_SUB(NOW(), INTERVAL ? DAY)", array($purge)) as $user) {
                 $users[] = $user['user'];
             }
-            $del_users = '"'.implode('","', $users).'"';
-            if (dbDelete('users', "username NOT IN ($del_users)", array($del_users))) {
+
+            if (dbDelete('users', "username NOT IN " . dbGenPlaceholders(count($users)), $users)) {
                 echo "Removed users that haven't logged in for $purge days";
             }
         }
@@ -254,12 +256,15 @@ if ($options['f'] === 'refresh_alert_rules') {
         }
 
         echo 'Refreshing alert rules queries' . PHP_EOL;
-        $rules = dbFetchRows('SELECT `id`, `rule`, `builder` FROM `alert_rules`');
+        $rules = dbFetchRows('SELECT `id`, `rule`, `builder`, `extra` FROM `alert_rules`');
         foreach ($rules as $rule) {
-            $data['query'] = GenSQL($rule['rule'], $rule['builder']);
-            if (!empty($data['query'])) {
-                dbUpdate($data, 'alert_rules', 'id=?', array($rule['id']));
-                unset($data);
+            $rule_options = json_decode($rule['extra'], true);
+            if ($rule_options['options']['override_query'] !== 'on') {
+                $data['query'] = GenSQL($rule['rule'], $rule['builder']);
+                if (!empty($data['query'])) {
+                    dbUpdate($data, 'alert_rules', 'id=?', array($rule['id']));
+                    unset($data);
+                }
             }
         }
     } catch (LockException $e) {
@@ -293,4 +298,30 @@ if ($options['f'] === 'peeringdb') {
 if ($options['f'] === 'refresh_os_cache') {
     echo 'Clearing OS cache' . PHP_EOL;
     unlink(Config::get('install_dir') . '/cache/os_defs.cache');
+}
+
+if ($options['f'] === 'recalculate_device_dependencies') {
+    // fix broken dependency max_depth calculation in case things weren't done though eloquent
+
+    try {
+        if (Config::get('distributed_poller')) {
+            MemcacheLock::lock('recalculate_device_dependencies', 0, 86000);
+        }
+        \LibreNMS\DB\Eloquent::boot();
+
+        // update all root nodes and recurse, chunk so we don't blow up
+        Device::doesntHave('parents')->with('children')->chunk(100, function (Collection $devices) {
+            // anonymous recursive function
+            $recurse = function (Device $device) use (&$recurse) {
+                $device->updateMaxDepth();
+
+                $device->children->each($recurse);
+            };
+
+            $devices->each($recurse);
+        });
+    } catch (LockException $e) {
+        echo $e->getMessage() . PHP_EOL;
+        exit(-1);
+    }
 }

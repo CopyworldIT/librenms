@@ -1,4 +1,5 @@
 source: Extensions/Smokeping.md
+path: blob/master/doc/
 # Smokeping integration
 
 [SmokePing](https://oss.oetiker.ch/smokeping/) is a tool which lets us keep track of network latency, and visualise this through RRD graphs. 
@@ -198,7 +199,7 @@ In terms of configuration, simply add the location of where smokeping data such 
 $config['smokeping']['dir'] = '/var/lib/smokeping'; // Ubuntu 16.04 Location
 #$config['smokeping']['dir'] = '/opt/smokeping/data';
 $config['smokeping']['pings'] = 20;		// should be equal to "pings" in your smokeping config
-$config['smokeping_server_hostname'].
+$config['smokeping']['integration'] = true;
 ```
 
 You should now see a new tab in your device page called ping.
