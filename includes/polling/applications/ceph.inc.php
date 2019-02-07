@@ -171,20 +171,24 @@ if (!empty($agent_data['app'][$name])) {
             $rrd_def = RrdDefinition::make()
                 ->addDataset('ops', 'GAUGE', 0)
                 ->addDataset('wrbytes', 'GAUGE', 0)
-                ->addDataset('rbytes', 'GAUGE', 0);
+                ->addDataset('rbytes', 'GAUGE', 0)
+                ->addDataset('read_ops', 'GAUGE', 0)
+                ->addDataset('write_ops', 'GAUGE', 0);
 
             foreach (explode("\n", $data) as $line) {
                 if (empty($line)) {
                     continue;
                 }
-                list($pool,$ops,$wrbytes,$rbytes) = explode(':', $line);
+                list($pool, $ops, $wrbytes, $rbytes, $read_ops, $write_ops) = explode(':', $line);
                 $rrd_name = array('app', $name, $app_id, 'pool', $pool);
 
-                print "Ceph Pool: $pool, IOPS: $ops, Wr bytes: $wrbytes, R bytes: $rbytes\n";
+                print "Ceph Pool: $pool, Total IOPS: $ops, Read IOPS: $read_ops, Write IOPS: $write_ops, Wr bytes: $wrbytes, R bytes: $rbytes\n";
                 $fields = array(
                     'ops' => $ops,
                     'wrbytes' => $wrbytes,
-                    'rbytes' => $rbytes
+                    'rbytes' => $rbytes,
+                    'read_ops' => $read_ops,
+                    'write_ops' => $write_ops
                 );
                 $metrics["pool_$pool"] = $fields;
                 $tags = compact('name', 'app_id', 'pool', 'rrd_name', 'rrd_def');
