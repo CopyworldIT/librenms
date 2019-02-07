@@ -15,6 +15,78 @@ if (!empty($agent_data['app'][$name])) {
         list($section, $data) = explode('>', $section);
 
         if ($section == 'cephstatus') {
+            $rrd_def = RrdDefinition::make()
+                ->addDataset('health', 'GAUGE', 0)
+                ->addDataset('num_osds', 'GAUGE', 0)
+                ->addDataset('num_up_osds', 'GAUGE', 0)
+                ->addDataset('num_down_osds', 'GAUGE', 0)
+                ->addDataset('num_in_osds', 'GAUGE', 0)
+                ->addDataset('num_out_osds', 'GAUGE', 0)
+                ->addDataset('num_remapped_pgs', 'GAUGE', 0)
+                ->addDataset('nearfull', 'GAUGE', 0)
+                ->addDataset('full', 'GAUGE', 0)
+                ->addDataset('num_pgs', 'GAUGE', 0)
+                ->addDataset('num_pools', 'GAUGE', 0)
+                ->addDataset('num_objects', 'GAUGE', 0)
+                ->addDataset('data_bytes', 'GAUGE', 0)
+                ->addDataset('bytes_used', 'GAUGE', 0)
+                ->addDataset('bytes_avail', 'GAUGE', 0)
+                ->addDataset('bytes_total', 'GAUGE', 0)
+                ->addDataset('read_bytes_sec', 'GAUGE', 0)
+                ->addDataset('write_bytes_sec', 'GAUGE', 0)
+                ->addDataset('read_op_per_sec', 'GAUGE', 0)
+                ->addDataset('write_op_per_sec', 'GAUGE', 0);
+
+            $fields = [
+                'health' => 0,
+                'num_osds' => 0,
+                'num_up_osds' => 0,
+                'num_down_osds' => 0,
+                'num_in_osds' => 0,
+                'num_out_osds' => 0,
+                'num_remapped_pgs' => 0,
+                'nearfull' => 0,
+                'full' => 0,
+                'num_pgs' => 0,
+                'num_pools' => 0,
+                'num_objects' => 0,
+                'data_bytes' => 0,
+                'bytes_used' => 0,
+                'bytes_avail' => 0,
+                'bytes_total' => 0,
+                'read_bytes_sec' => 0,
+                'write_bytes_sec' => 0,
+                'read_op_per_sec' => 0,
+                'write_op_per_sec' => 0
+            ];
+
+            // Map ceph health status to integer so it can be stored in rrd and influx.
+            $health_map = [
+                'HEALTH_OK' => 0,
+                'HEALTH_WARN' => 1,
+                'HEALTH_CRIT' => 2,
+                'HEALTH_ERR' => 3,
+                'UNKNOWN' => 4
+            ];
+
+            $rrd_name = ['app', $name, $app_id, 'cephstatus'];
+
+            foreach (explode("\n", $data) as $line) {
+                if (empty($line)) continue;
+                list($field_name, $value) = explode(':', $line);
+                if ($field_name == 'health') {
+                    $fields['health'] = $health_map[$value];
+                } else {
+                    $fields[$field_name] = $value;
+                }
+            }
+
+            print "Ceph Status:\n";
+            d_echo($fields);
+
+            $metrics["cephstatus"] = $fields;
+            $tags = compact('name', 'app_id', 'cephstatus', 'rrd_name', 'rrd_def');
+            data_update($device, 'app', $tags, $fields);
 
         } else if ($section == 'pgstates') {
             $rrd_def = RrdDefinition::make()
