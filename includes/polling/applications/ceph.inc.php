@@ -77,7 +77,7 @@ if (!empty($agent_data['app'][$name])) {
                 if ($field_name == 'health') {
                     $fields['health'] = $health_map[$value];
                 } else {
-                    $fields[$field_name] = $value;
+                    $fields[$field_name] = intval($value);
                 }
             }
 
@@ -121,35 +121,35 @@ if (!empty($agent_data['app'][$name])) {
                 ->addDataset('snaptrim_error', 'GAUGE', 0);
 
             $fields = [
-                'creating' => '0',
-                'activating' => '0',
-                'active' => '0',
-                'clean' => '0',
-                'down' => '0',
-                'scrubbing' => '0',
-                'deep' => '0',
-                'degraded' => '0',
-                'inconsistent' => '0',
-                'peering' => '0',
-                'repair' => '0',
-                'recovering' => '0',
-                'forced_recovery' => '0',
-                'recovery_wait' => '0',
-                'recovery_toofull' => '0',
-                'recovery_unfound' => '0',
-                'backfilling' => '0',
-                'forced_backfill' => '0',
-                'backfill_wait' => '0',
-                'backfill_toofull' => '0',
-                'backfill_unfound' => '0',
-                'incomplete' => '0',
-                'stale' => '0',
-                'remapped' => '0',
-                'undersized' => '0',
-                'peered' => '0',
-                'snaptrim' => '0',
-                'snaptrim_wait' => '0',
-                'snaptrim_error' => '0',
+                'creating' => 0,
+                'activating' => 0,
+                'active' => 0,
+                'clean' => 0,
+                'down' => 0,
+                'scrubbing' => 0,
+                'deep' => 0,
+                'degraded' => 0,
+                'inconsistent' => 0,
+                'peering' => 0,
+                'repair' => 0,
+                'recovering' => 0,
+                'forced_recovery' => 0,
+                'recovery_wait' => 0,
+                'recovery_toofull' => 0,
+                'recovery_unfound' => 0,
+                'backfilling' => 0,
+                'forced_backfill' => 0,
+                'backfill_wait' => 0,
+                'backfill_toofull' => 0,
+                'backfill_unfound' => 0,
+                'incomplete' => 0,
+                'stale' => 0,
+                'remapped' => 0,
+                'undersized' => 0,
+                'peered' => 0,
+                'snaptrim' => 0,
+                'snaptrim_wait' => 0,
+                'snaptrim_error' => 0,
             ];
 
             $rrd_name = ['app', $name, $app_id, 'pgstates'];
@@ -157,7 +157,7 @@ if (!empty($agent_data['app'][$name])) {
             foreach (explode("\n", $data) as $line) {
                 if (empty($line)) continue;
                 list($state_name, $count) = explode(':', $line);
-                $fields[$state_name] = $count;
+                $fields[$state_name] = intval($count);
             }
 
             print "Ceph Placement Group States:\n";
