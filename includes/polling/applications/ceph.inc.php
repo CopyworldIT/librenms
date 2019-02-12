@@ -35,7 +35,19 @@ if (!empty($agent_data['app'][$name])) {
                 ->addDataset('read_bytes_sec', 'GAUGE', 0)
                 ->addDataset('write_bytes_sec', 'GAUGE', 0)
                 ->addDataset('read_op_per_sec', 'GAUGE', 0)
-                ->addDataset('write_op_per_sec', 'GAUGE', 0);
+                ->addDataset('write_op_per_sec', 'GAUGE', 0)
+                ->addDataset('misplaced_objects', 'GAUGE', 0)
+                ->addDataset('misplaced_total', 'GAUGE', 0)
+                ->addDataset('misplaced_ratio', 'GAUGE', 0)
+                ->addDataset('degraded_objects', 'GAUGE', 0)
+                ->addDataset('degraded_total', 'GAUGE', 0)
+                ->addDataset('degraded_ratio', 'GAUGE', 0)
+                ->addDataset('recovering_objects_per_sec', 'GAUGE', 0)
+                ->addDataset('recovering_bytes_per_sec', 'GAUGE', 0)
+                ->addDataset('recovering_keys_per_sec', 'GAUGE', 0)
+                ->addDataset('num_objects_recovered', 'GAUGE', 0)
+                ->addDataset('num_bytes_recovered', 'GAUGE', 0)
+                ->addDataset('num_keys_recovered', 'GAUGE', 0);
 
             $fields = [
                 'health' => 0,
@@ -57,7 +69,19 @@ if (!empty($agent_data['app'][$name])) {
                 'read_bytes_sec' => 0,
                 'write_bytes_sec' => 0,
                 'read_op_per_sec' => 0,
-                'write_op_per_sec' => 0
+                'write_op_per_sec' => 0,
+                'misplaced_objects' => 0,
+                'misplaced_total' => 0,
+                'misplaced_ratio' => 0,
+                'degraded_objects' => 0,
+                'degraded_total' => 0,
+                'degraded_ratio' => 0,
+                'recovering_objects_per_sec' => 0,
+                'recovering_bytes_per_sec' => 0,
+                'recovering_keys_per_sec' => 0,
+                'num_objects_recovered' => 0,
+                'num_bytes_recovered' => 0,
+                'num_keys_recovered' => 0
             ];
 
             // Map ceph health status to integer so it can be stored in rrd and influx.
@@ -149,7 +173,7 @@ if (!empty($agent_data['app'][$name])) {
                 'peered' => 0,
                 'snaptrim' => 0,
                 'snaptrim_wait' => 0,
-                'snaptrim_error' => 0,
+                'snaptrim_error' => 0
             ];
 
             $rrd_name = ['app', $name, $app_id, 'pgstates'];
@@ -173,23 +197,53 @@ if (!empty($agent_data['app'][$name])) {
                 ->addDataset('wrbytes', 'GAUGE', 0)
                 ->addDataset('rbytes', 'GAUGE', 0)
                 ->addDataset('read_ops', 'GAUGE', 0)
-                ->addDataset('write_ops', 'GAUGE', 0);
+                ->addDataset('write_ops', 'GAUGE', 0)
+                ->addDataset('misplaced_objects', 'GAUGE', 0)
+                ->addDataset('misplaced_total', 'GAUGE', 0)
+                ->addDataset('misplaced_ratio', 'GAUGE', 0)
+                ->addDataset('degraded_objects', 'GAUGE', 0)
+                ->addDataset('degraded_total', 'GAUGE', 0)
+                ->addDataset('degraded_ratio', 'GAUGE', 0)
+                ->addDataset('recovering_objects_per_sec', 'GAUGE', 0)
+                ->addDataset('recovering_bytes_per_sec', 'GAUGE', 0)
+                ->addDataset('recovering_keys_per_sec', 'GAUGE', 0)
+                ->addDataset('num_objects_recovered', 'GAUGE', 0)
+                ->addDataset('num_bytes_recovered', 'GAUGE', 0)
+                ->addDataset('num_keys_recovered', 'GAUGE', 0);
 
             foreach (explode("\n", $data) as $line) {
                 if (empty($line)) {
                     continue;
                 }
-                list($pool, $ops, $wrbytes, $rbytes, $read_ops, $write_ops) = explode(':', $line);
+                list($pool, $ops, $wrbytes, $rbytes, $read_ops, $write_ops, $misplaced_objects,
+                    $misplaced_total, $misplaced_ratio, $degraded_objects, $degraded_total, $degraded_ratio,
+                    $recovering_objects_per_sec, $recovering_bytes_per_sec, $recovering_keys_per_sec,
+                    $num_objects_recovered, $num_bytes_recovered, $num_keys_recovered) = explode(':', $line);
                 $rrd_name = array('app', $name, $app_id, 'pool', $pool);
 
-                print "Ceph Pool: $pool, Total IOPS: $ops, Read IOPS: $read_ops, Write IOPS: $write_ops, Wr bytes: $wrbytes, R bytes: $rbytes\n";
                 $fields = array(
                     'ops' => $ops,
                     'wrbytes' => $wrbytes,
                     'rbytes' => $rbytes,
                     'read_ops' => $read_ops,
-                    'write_ops' => $write_ops
+                    'write_ops' => $write_ops,
+                    'misplaced_objects' => $misplaced_objects,
+                    'misplaced_total' => $misplaced_total,
+                    'misplaced_ratio' => $misplaced_ratio,
+                    'degraded_objects' => $degraded_objects,
+                    'degraded_total' => $degraded_total,
+                    'degraded_ratio' => $degraded_ratio,
+                    'recovering_objects_per_sec' => $recovering_objects_per_sec,
+                    'recovering_bytes_per_sec' => $recovering_bytes_per_sec,
+                    'recovering_keys_per_sec' => $recovering_keys_per_sec,
+                    'num_objects_recovered' => $num_objects_recovered,
+                    'num_bytes_recovered' => $num_bytes_recovered,
+                    'num_keys_recovered' => $num_keys_recovered
                 );
+
+                print "Ceph Pool: $pool, Total IOPS: $ops, Read IOPS: $read_ops, Write IOPS: $write_ops, Wr bytes: $wrbytes, R bytes: $rbytes\n";
+                d_echo($fields);
+                
                 $metrics["pool_$pool"] = $fields;
                 $tags = compact('name', 'app_id', 'pool', 'rrd_name', 'rrd_def');
                 data_update($device, 'app', $tags, $fields);
