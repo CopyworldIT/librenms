@@ -193,23 +193,23 @@ if (!empty($agent_data['app'][$name])) {
 
         } else if ($section == "poolstats") {
             $rrd_def = RrdDefinition::make()
-                ->addDataset('ops', 'GAUGE', 0)
-                ->addDataset('wrbytes', 'GAUGE', 0)
-                ->addDataset('rbytes', 'GAUGE', 0)
-                ->addDataset('read_ops', 'GAUGE', 0)
-                ->addDataset('write_ops', 'GAUGE', 0)
-                ->addDataset('misplaced_objects', 'GAUGE', 0)
-                ->addDataset('misplaced_total', 'GAUGE', 0)
-                ->addDataset('misplaced_ratio', 'GAUGE', 0)
-                ->addDataset('degraded_objects', 'GAUGE', 0)
-                ->addDataset('degraded_total', 'GAUGE', 0)
-                ->addDataset('degraded_ratio', 'GAUGE', 0)
-                ->addDataset('recovering_objects_per_sec', 'GAUGE', 0)
-                ->addDataset('recovering_bytes_per_sec', 'GAUGE', 0)
-                ->addDataset('recovering_keys_per_sec', 'GAUGE', 0)
-                ->addDataset('num_objects_recovered', 'GAUGE', 0)
-                ->addDataset('num_bytes_recovered', 'GAUGE', 0)
-                ->addDataset('num_keys_recovered', 'GAUGE', 0);
+                ->addDataset('pool_ops', 'GAUGE', 0)
+                ->addDataset('pool_wrbytes', 'GAUGE', 0)
+                ->addDataset('pool_rbytes', 'GAUGE', 0)
+                ->addDataset('pool_read_ops', 'GAUGE', 0)
+                ->addDataset('pool_write_ops', 'GAUGE', 0)
+                ->addDataset('pool_misplaced_objects', 'GAUGE', 0)
+                ->addDataset('pool_misplaced_total', 'GAUGE', 0)
+                ->addDataset('pool_misplaced_ratio', 'GAUGE', 0)
+                ->addDataset('pool_degraded_objects', 'GAUGE', 0)
+                ->addDataset('pool_degraded_total', 'GAUGE', 0)
+                ->addDataset('pool_degraded_ratio', 'GAUGE', 0)
+                ->addDataset('pool_recovering_objects_per_sec', 'GAUGE', 0)
+                ->addDataset('pool_recovering_bytes_per_sec', 'GAUGE', 0)
+                ->addDataset('pool_recovering_keys_per_sec', 'GAUGE', 0)
+                ->addDataset('pool_num_objects_recovered', 'GAUGE', 0)
+                ->addDataset('pool_num_bytes_recovered', 'GAUGE', 0)
+                ->addDataset('pool_num_keys_recovered', 'GAUGE', 0);
 
             foreach (explode("\n", $data) as $line) {
                 if (empty($line)) {
@@ -222,23 +222,23 @@ if (!empty($agent_data['app'][$name])) {
                 $rrd_name = array('app', $name, $app_id, 'pool', $pool);
 
                 $fields = array(
-                    'ops' => $ops,
-                    'wrbytes' => $wrbytes,
-                    'rbytes' => $rbytes,
-                    'read_ops' => $read_ops,
-                    'write_ops' => $write_ops,
-                    'misplaced_objects' => $misplaced_objects,
-                    'misplaced_total' => $misplaced_total,
-                    'misplaced_ratio' => $misplaced_ratio,
-                    'degraded_objects' => $degraded_objects,
-                    'degraded_total' => $degraded_total,
-                    'degraded_ratio' => $degraded_ratio,
-                    'recovering_objects_per_sec' => $recovering_objects_per_sec,
-                    'recovering_bytes_per_sec' => $recovering_bytes_per_sec,
-                    'recovering_keys_per_sec' => $recovering_keys_per_sec,
-                    'num_objects_recovered' => $num_objects_recovered,
-                    'num_bytes_recovered' => $num_bytes_recovered,
-                    'num_keys_recovered' => $num_keys_recovered
+                    'pool_ops' => $ops,
+                    'pool_wrbytes' => $wrbytes,
+                    'pool_rbytes' => $rbytes,
+                    'pool_read_ops' => $read_ops,
+                    'pool_write_ops' => $write_ops,
+                    'pool_misplaced_objects' => $misplaced_objects,
+                    'pool_misplaced_total' => $misplaced_total,
+                    'pool_misplaced_ratio' => $misplaced_ratio,
+                    'pool_degraded_objects' => $degraded_objects,
+                    'pool_degraded_total' => $degraded_total,
+                    'pool_degraded_ratio' => $degraded_ratio,
+                    'pool_pool_recovering_objects_per_sec' => $recovering_objects_per_sec,
+                    'pool_recovering_bytes_per_sec' => $recovering_bytes_per_sec,
+                    'pool_recovering_keys_per_sec' => $recovering_keys_per_sec,
+                    'pool_num_objects_recovered' => $num_objects_recovered,
+                    'pool_num_bytes_recovered' => $num_bytes_recovered,
+                    'pool_num_keys_recovered' => $num_keys_recovered
                 );
 
                 print "Ceph Pool: $pool, Total IOPS: $ops, Read IOPS: $read_ops, Write IOPS: $write_ops, Wr bytes: $wrbytes, R bytes: $rbytes\n";
